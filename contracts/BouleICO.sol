@@ -72,10 +72,8 @@ contract BouleICO is Ownable{
         Whitelisted(addr, status);
     }
 
-    // @notice Get the price for a BOU token at any given block number
-    // @param _blockNumber the block for which the price is requested
-    // @return price of boule
-    // If sale isn't ongoing for that block, returns 0.
+    // @notice Get the price for a BOU token at current time
+    // @return price of BOU
     function getPrice() constant public returns (uint256) {
         var time = getNow();
         if(time < startTime){
