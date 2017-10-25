@@ -215,7 +215,7 @@ contract('ICO', function(accounts) {
         // presale balance should be 0
         let balance = web3.eth.getBalance(ico.address);
         balance.should.be.bignumber.equal(0);
-        // multisig balance should be 5 ETH
+        // multisig balance should be 2 ETH
         let balanceWallet = web3.eth.getBalance(multisig.address);
         balanceWallet.should.be.bignumber.equal(2*10**18);
 

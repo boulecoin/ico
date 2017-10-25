@@ -13,31 +13,27 @@ import 'zeppelin/ownership/Ownable.sol';
 contract BouleICO is Ownable{
 
     uint public startTime;             // unix ts in which the sale starts.
-    uint public secondPriceTime;             // unix ts in which the second price triggers.
-    uint public thirdPriceTime;             // unix ts in which the third price starts.
-    uint public fourthPriceTime;             // unix ts in which the fourth price starts.
+    uint public secondPriceTime;       // unix ts in which the second price triggers.
+    uint public thirdPriceTime;        // unix ts in which the third price starts.
+    uint public fourthPriceTime;       // unix ts in which the fourth price starts.
     uint public endTime;               // unix ts in which the sale end.
 
-    address public bouleDevMultisig;      // The address to hold the funds donated
+    address public bouleDevMultisig;   // The address to hold the funds donated
 
-    uint public totalCollected = 0;               // In wei
-    bool public saleStopped = false;              // Has Boulé Dev stopped the sale?
-    bool public saleFinalized = false;            // Has Boulé Dev finalized the sale?
+    uint public totalCollected = 0;    // In wei
+    bool public saleStopped = false;   // Has Boulé stopped the sale?
+    bool public saleFinalized = false; // Has Boulé finalized the sale?
 
-    BouleToken public token;              // The token
+    BouleToken public token;           // The token
 
-    MultiSigWallet wallet;
+    MultiSigWallet wallet;             // Multisig
 
     uint constant public minInvestment = 0.1 ether;    // Minimum investment  0.1 ETH
 
     /** Addresses that are allowed to invest even before ICO opens. For testing, for ICO partners, etc. */
     mapping (address => bool) public whitelist;
 
-    /** How much they have invested */
-    mapping(address => uint) public balances;
-
     event NewBuyer(address indexed holder, uint256 bouAmount, uint256 amount);
-    // Address early participation whitelist status changed
     event Whitelisted(address addr, bool status);
 
     function BouleICO (
@@ -72,7 +68,7 @@ contract BouleICO is Ownable{
         Whitelisted(addr, status);
     }
 
-    // @notice Get the price for a BOU token at current time
+    // @notice Get the price for a BOU token at current time (how many tokens for 1 ETH)
     // @return price of BOU
     function getPrice() constant public returns (uint256) {
         var time = getNow();
@@ -81,15 +77,15 @@ contract BouleICO is Ownable{
             return 1400;
         }
         if(time < secondPriceTime){
-            return 1200;
+            return 1200; //20%
         }
         if(time < thirdPriceTime){
-            return 1150;
+            return 1150; //15%
         }
         if(time < fourthPriceTime){
-            return 1100;
+            return 1100; //10%
         }
-        return 1050;
+        return 1050; //5%
     }
 
 
@@ -101,7 +97,7 @@ contract BouleICO is Ownable{
     }
 
 
-    /// @dev The fallback function is called when ether is sent to the contract, it
+    /// The fallback function is called when ether is sent to the contract, it
     /// simply calls `doPayment()` with the address that sent the ether as the
     /// `_owner`. Payable is a required solidity modifier for functions to receive
     /// ether, without this modifier functions will throw if ether is sent to them
@@ -130,8 +126,7 @@ contract BouleICO is Ownable{
         }
         // transfer token (it will throw error if transaction is not valid)
         token.transfer(_owner, tokenAmount);
-        // record investment
-        balances[_owner] = SafeMath.add(balances[_owner], msg.value);
+
         // record total selling
         totalCollected = SafeMath.add(totalCollected, msg.value);
 
@@ -144,18 +139,16 @@ contract BouleICO is Ownable{
     only_sale_not_stopped
     onlyOwner
     public {
-
         saleStopped = true;
     }
 
     // @notice Function to restart stopped sale.
-    // @dev Only Boulé Dev can do it after it has been disabled and sale is ongoing.
+    // @dev Only Boulé can do it after it has been disabled and sale is ongoing.
     function restartSale()
     only_during_sale_period
     only_sale_stopped
     onlyOwner
     public {
-
         saleStopped = false;
     }
 
@@ -197,11 +190,6 @@ contract BouleICO is Ownable{
         _;
     }
 
-    modifier only_before_sale {
-        if (getNow() >= startTime) throw;
-        _;
-    }
-
     modifier only_during_sale_period {
         if (getNow() < startTime) throw;
         if (getNow() >= endTime) throw;
@@ -227,12 +215,6 @@ contract BouleICO is Ownable{
 
     modifier only_sale_not_stopped {
         if (saleStopped) throw;
-        _;
-    }
-
-    modifier only_finalized_sale {
-        if (getNow() < endTime) throw;
-        if (!saleFinalized) throw;
         _;
     }
 
